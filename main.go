@@ -59,18 +59,23 @@ func analyseFile(path string, chCnt chan int, chErr chan error) {
 	}
 	defer file.Close()
 	r := bufio.NewReader(file)
+	fileMap := make(map[string]int64)
 	for {
 		line, err := r.ReadBytes('\n')
 		if err != nil {
 			break
 		}
 		for i := range line {
-			mutex.Lock()
-			vl := result[string(line[i])]
-			result[string(line[i])] = vl + 1
-			mutex.Unlock()
+			vl := fileMap[string(line[i])]
+			fileMap[string(line[i])] = vl + 1
 		}
 	}
+	mutex.Lock()
+	for nm := range fileMap {
+		z := result[nm] + fileMap[nm]
+		result[nm] = z
+	}
+	mutex.Unlock()
 	_ = <-chCnt
 	chErr <- err
 }
