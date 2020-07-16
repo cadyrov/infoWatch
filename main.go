@@ -11,9 +11,18 @@ import (
 
 var (
 	fileRoutines = 10
-	result       map[string]int64
-	mutex        sync.Mutex
 )
+
+type MuxMap struct {
+	result map[string]int64
+	mx     sync.Mutex
+}
+
+func NewMuxMap() *MuxMap {
+	return &MuxMap{
+		result: make(map[string]int64),
+	}
+}
 
 func main() {
 	args := os.Args
@@ -36,19 +45,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	result = make(map[string]int64)
+	muxMap := NewMuxMap()
 	chCnt := make(chan int, fileRoutines)
 	chErr := make(chan error, len(filesToAnalise))
 	for i := range filesToAnalise {
-		go analyseFile(filesToAnalise[i], chCnt, chErr)
+		go muxMap.analyseFile(filesToAnalise[i], chCnt, chErr)
 	}
 	for range filesToAnalise {
 		<-chErr
 	}
-	fmt.Println(result)
+	fmt.Println(muxMap.result)
 }
 
-func analyseFile(path string, chCnt chan int, chErr chan error) {
+func (mm *MuxMap) analyseFile(path string, chCnt chan int, chErr chan error) {
 	var err error
 	chCnt <- 1
 	file, err := os.Open(path)
@@ -70,12 +79,12 @@ func analyseFile(path string, chCnt chan int, chErr chan error) {
 			fileMap[string(line[i])] = vl + 1
 		}
 	}
-	mutex.Lock()
+	mm.mx.Lock()
 	for nm := range fileMap {
-		z := result[nm] + fileMap[nm]
-		result[nm] = z
+		z := mm.result[nm] + fileMap[nm]
+		mm.result[nm] = z
 	}
-	mutex.Unlock()
+	mm.mx.Unlock()
 	_ = <-chCnt
 	chErr <- err
 }
