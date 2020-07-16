@@ -18,7 +18,7 @@ var (
 func main() {
 	args := os.Args
 	if len(args) < 2 {
-		fmt.Println("send path tp folder as first argument and count of routines as second")
+		fmt.Println("send absolute path to folder as first argument and count of routines as second")
 		return
 	}
 	fmt.Println("path is " + os.Args[1])
@@ -87,7 +87,7 @@ func getFiles(path string) ([]string, error) {
 		return nil, err
 	}
 	if fi.IsDir() {
-		files, err := ioutil.ReadDir(fi.Name())
+		files, err := ioutil.ReadDir(path)
 		if err != nil {
 			return nil, err
 		}
@@ -95,7 +95,7 @@ func getFiles(path string) ([]string, error) {
 			if files[i].IsDir() {
 				continue
 			}
-			res = append(res, files[i].Name())
+			res = append(res, path+"/"+files[i].Name())
 		}
 	} else {
 		res = append(res, path)
