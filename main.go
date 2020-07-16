@@ -40,7 +40,7 @@ func main() {
 			fileRoutines = 10
 		}
 	}
-
+	fmt.Println(fmt.Sprintf("process start at %d routines", fileRoutines))
 	filesToAnalise, err := getFiles(os.Args[1])
 	if err != nil {
 		panic(err)
@@ -60,6 +60,7 @@ func main() {
 func (mm *MuxMap) analyseFile(path string, chCnt chan int, chErr chan error) {
 	var err error
 	chCnt <- 1
+	fmt.Println("start to parse " + path)
 	file, err := os.Open(path)
 	if err != nil {
 		_ = <-chCnt
